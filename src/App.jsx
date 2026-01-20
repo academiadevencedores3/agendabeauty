@@ -3,7 +3,9 @@ import {
   Map, Calendar, User, ShoppingBag, Home, Search, 
   Heart, MapPin, Clock, ChevronRight, Star, 
   Filter, Award, LogOut, Ticket, Settings,
-  Plus, Trash2, Save, X, Lock, CheckCircle, Edit2
+  Plus, Trash2, Save, X, Lock, CheckCircle, Edit2,
+  Bus, Phone, MessageCircle, AlertCircle, Check, Image as ImageIcon, Upload,
+  Bell, Shield, ChevronLeft
 } from 'lucide-react';
 
 /**
@@ -36,27 +38,39 @@ const INITIAL_SCHEDULE = [
 ];
 
 const INITIAL_OFFERS = [
-  { id: 1, title: 'Kit Reconstrução c/ 40% OFF', exhibitorId: 1, exhibitorName: 'Loreal Pro', discount: '40%', code: 'BEAUTY40', expires: '2h 15m' },
+  { id: 1, title: 'Kit Reconstrução c/ 40% OFF', exhibitorId: 1, exhibitorName: 'Loreal Pro', discount: '40%', code: 'BEAUTY40', expires: '2h 15m', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400' },
   { id: 2, title: 'Compre 3 Leve 4 Esmaltes', exhibitorId: 5, exhibitorName: 'Risqué', discount: '25%', code: 'UNHAS25', expires: '4h 00m' },
   { id: 3, title: 'Combo Barber Shop', exhibitorId: 4, exhibitorName: 'Barba de Respeito', discount: '30%', code: 'BARBA30', expires: '1h 30m' },
+];
+
+const INITIAL_CARAVANS = [
+  { id: 1, title: 'Van da Estética - Arapiraca', origin: 'Arapiraca - Posto Divina Luz', date: '20/10', time: '07:00', price: '45,00', seats: 15, available: 4, organizer: 'Maria Cláudia', contact: '82999998888', vehicle: 'Van Sprinter' },
+  { id: 2, title: 'Carona Solidária Recife', origin: 'Recife - Derby', date: '21/10', time: '06:00', price: '60,00', seats: 4, available: 1, organizer: 'João Paulo', contact: '81988887777', vehicle: 'Chevrolet Onix' },
+  { id: 3, title: 'Ônibus Salões Maceió', origin: 'Maceió - Shopping Pátio', date: '20/10', time: '08:00', price: '20,00', seats: 45, available: 20, organizer: 'Assoc. Cabeleireiros', contact: '82977776666', vehicle: 'Ônibus Executivo' },
+];
+
+const MOCK_ORGANIZER_REQUESTS = [
+  { id: 101, name: 'Carlos Motorista', phone: '82999991111', vehicle: 'Van Ducato 20 lugares', cpf: '000.111.222-33', status: 'pending' },
+  { id: 102, name: 'Ana Viagens', phone: '82988882222', vehicle: 'Ônibus 50 lugares', cpf: '111.222.333-44', status: 'pending' }
 ];
 
 /**
  * COMPONENTES UTILITÁRIOS
  */
 
-const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, type = "button" }) => {
+const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, type = "button", disabled = false }) => {
   const baseStyle = "w-full py-3 rounded-xl font-medium flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed";
   const variants = {
     primary: "bg-gradient-to-r from-rose-500 to-fuchsia-600 text-white shadow-lg shadow-rose-200",
     secondary: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50",
     outline: "border-2 border-rose-500 text-rose-600 bg-transparent",
     ghost: "bg-transparent text-gray-500 hover:bg-gray-100",
-    danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+    danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100",
+    success: "bg-green-500 text-white shadow-lg shadow-green-200"
   };
 
   return (
-    <button type={type} onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+    <button type={type} onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
       {Icon && <Icon size={18} className="mr-2" />}
       {children}
     </button>
@@ -100,6 +114,49 @@ const Select = ({ label, children, ...props }) => (
   </div>
 );
 
+// Novo Componente de Input de Imagem
+const ImageInput = ({ label, value, onChange, recommendedSize }) => {
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onChange(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="mb-3">
+      <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">{label}</label>
+      <div className="space-y-2">
+        <input 
+          type="text" 
+          placeholder="Cole a URL da imagem..." 
+          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-rose-500"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <div className="flex items-center gap-2">
+          <label className="flex-1 cursor-pointer bg-white border border-dashed border-gray-300 rounded-xl p-3 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            <span className="text-xs flex items-center font-medium"><Upload size={14} className="mr-1"/> Fazer Upload</span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
+          {value && (
+            <div className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 shrink-0">
+               <img src={value} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+        <p className="text-[10px] text-gray-400 ml-1 flex items-center gap-1">
+          <AlertCircle size={10} /> Tamanho padrão: <span className="font-medium text-gray-600">{recommendedSize}</span>
+        </p>
+      </div>
+    </div>
+  );
+};
+
 /**
  * TELAS DO APLICATIVO
  */
@@ -133,7 +190,7 @@ const HomeScreen = ({ onChangeScreen, userInterests, exhibitors }) => {
           { icon: Map, label: 'Mapa', screen: 'map' },
           { icon: Calendar, label: 'Agenda', screen: 'schedule' },
           { icon: ShoppingBag, label: 'Expositores', screen: 'exhibitors' },
-          { icon: Ticket, label: 'Ofertas', screen: 'offers' },
+          { icon: Bus, label: 'Caravanas', screen: 'caravans' },
         ].map((item, idx) => (
           <button 
             key={idx}
@@ -314,22 +371,14 @@ const ScheduleScreen = ({ schedule }) => {
 // 4. MAPA (Esquemático CSS Grid)
 const MapScreen = ({ exhibitors }) => {
   const booths = Array.from({ length: 24 }, (_, i) => {
-    const exhibitor = exhibitors.find(e => e.id === (i % 6) + 1); // Mock mapping logic for demo
-    // Realistic mapping would map exhibitor.booth to grid ID
-    
-    // Simple logic just to show *some* exhibitors on map
-    const mappedExhibitor = exhibitors.find(e => {
-        // extract number from "A-10" -> 10, simplificação para demo
-        return false; 
-    }) || (i % 5 === 0 && i < 15 ? exhibitors[i % exhibitors.length] : null);
-
+    const exhibitor = exhibitors.find(e => e.id === (i % 6) + 1); // Mock mapping
     const isWalkway = [2, 5, 8, 11, 14, 17].includes(i); 
     
     return { 
       id: i, 
       label: isWalkway ? '' : `Stand ${i + 10}`, 
       type: isWalkway ? 'walkway' : 'booth',
-      exhibitor: isWalkway ? null : mappedExhibitor
+      exhibitor: isWalkway ? null : (isWalkway ? null : exhibitor || null)
     };
   });
 
@@ -390,7 +439,12 @@ const OffersScreen = ({ offers }) => {
       <div className="-mt-8 px-4 space-y-4">
         {offers.map(offer => (
           <div key={offer.id} className="bg-white rounded-2xl p-0 shadow-md border border-gray-100 overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-dashed border-gray-200 relative">
+            {offer.image && (
+              <div className="h-32 w-full relative">
+                 <img src={offer.image} className="w-full h-full object-cover" alt={offer.title} />
+              </div>
+            )}
+            <div className={`p-5 border-b border-dashed border-gray-200 relative ${offer.image ? 'pt-4' : ''}`}>
                <div className="absolute -left-3 top-1/2 w-6 h-6 bg-gray-50 rounded-full transform -translate-y-1/2"></div>
                <div className="absolute -right-3 top-1/2 w-6 h-6 bg-gray-50 rounded-full transform -translate-y-1/2"></div>
                
@@ -427,7 +481,7 @@ const OffersScreen = ({ offers }) => {
 };
 
 // 6. PERFIL DO USUÁRIO
-const ProfileScreen = ({ user, setUser }) => {
+const ProfileScreen = ({ user, setUser, onChangeScreen }) => {
   const toggleInterest = (id) => {
     const current = user.interests || [];
     const updated = current.includes(id) 
@@ -444,8 +498,19 @@ const ProfileScreen = ({ user, setUser }) => {
         </div>
         <div className="ml-4">
           <h2 className="text-xl font-bold text-gray-800">{user.name}</h2>
-          <p className="text-sm text-gray-500">{user.email}</p>
-          <span className="inline-block mt-2 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Visitante</span>
+          <div className="flex flex-col">
+            <p className="text-sm text-gray-500">{user.email}</p>
+            {user.organizerStatus === 'approved' && (
+              <span className="inline-block mt-1 text-teal-600 text-[10px] font-bold uppercase flex items-center">
+                <CheckCircle size={10} className="mr-1"/> Organizador Verificado
+              </span>
+            )}
+            {user.organizerStatus === 'pending' && (
+              <span className="inline-block mt-1 text-yellow-600 text-[10px] font-bold uppercase flex items-center">
+                <Clock size={10} className="mr-1"/> Aguardando Aprovação
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -474,7 +539,7 @@ const ProfileScreen = ({ user, setUser }) => {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <button className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
+          <button onClick={() => onChangeScreen('settings')} className="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
             <div className="flex items-center text-gray-700 text-sm font-medium">
               <Settings size={18} className="mr-3 text-gray-400" /> Configurações
             </div>
@@ -492,21 +557,226 @@ const ProfileScreen = ({ user, setUser }) => {
   );
 };
 
-// 7. DASHBOARD ADMIN E FERRAMENTAS
-const AdminScreen = ({ data, actions }) => {
+// 7. NOVA TELA: CONFIGURAÇÕES
+const SettingsScreen = ({ user, setUser, onBack }) => {
+  const [formData, setFormData] = useState({ name: user.name, email: user.email, notifications: true });
+
+  const handleSave = () => {
+    setUser({ ...user, name: formData.name, email: formData.email });
+    alert('Configurações salvas com sucesso!');
+    onBack();
+  };
+
+  return (
+    <div className="pb-24 animate-fade-in bg-gray-50 min-h-screen">
+       {/* Header with Back button */}
+       <div className="bg-white px-4 py-4 border-b border-gray-100 sticky top-0 flex items-center gap-3">
+         <button onClick={onBack}><ChevronLeft size={24} className="text-gray-600" /></button>
+         <h2 className="font-bold text-gray-800 text-lg">Configurações</h2>
+       </div>
+
+       <div className="p-4 space-y-6">
+          {/* Profile Edit Section */}
+          <section className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-700 mb-4 text-sm flex items-center"><User size={16} className="mr-2"/> Dados Pessoais</h3>
+            <Input label="Nome Completo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            <Input label="Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+          </section>
+          
+          {/* Notifications Section */}
+           <section className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-gray-700 mb-4 text-sm flex items-center"><Bell size={16} className="mr-2"/> Preferências</h3>
+            <div className="flex justify-between items-center py-2">
+               <span className="text-sm text-gray-600">Receber Notificações Push</span>
+               <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                  <input type="checkbox" name="toggle" id="toggle" checked={formData.notifications} onChange={e => setFormData({...formData, notifications: e.target.checked})} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-5" style={{right: formData.notifications ? 0 : 'auto', left: formData.notifications ? 'auto' : 0}}/>
+                  <label htmlFor="toggle" className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer ${formData.notifications ? 'bg-green-400' : 'bg-gray-300'}`}></label>
+              </div>
+            </div>
+            <div className="flex justify-between items-center py-2 border-t border-gray-100 mt-2">
+               <span className="text-sm text-gray-600">Termos de Privacidade</span>
+               <ChevronRight size={16} className="text-gray-400"/>
+            </div>
+          </section>
+
+          <Button onClick={handleSave} icon={Save}>Salvar Alterações</Button>
+          
+          <button className="w-full text-red-500 text-xs font-bold mt-4 py-3 border border-red-100 rounded-xl hover:bg-red-50" onClick={() => alert('Esta ação é irreversível. (Simulado)')}>
+            Excluir Minha Conta
+          </button>
+       </div>
+    </div>
+  )
+}
+
+// 8. TELA: CARAVANAS
+const CaravansScreen = ({ caravans, user, actions }) => {
+  const [showForm, setShowForm] = useState(false);
+  const [showOrganizerForm, setShowOrganizerForm] = useState(false);
+  const [newCaravan, setNewCaravan] = useState({ title: '', origin: '', date: '', time: '', price: '', seats: '', contact: '', vehicle: '' });
+  const [organizerRequest, setOrganizerRequest] = useState({ name: user.name, phone: '', vehicle: '', cpf: '' });
+
+  const handleCreateCaravan = (e) => {
+    e.preventDefault();
+    actions.addCaravan({
+      ...newCaravan,
+      id: Date.now(),
+      organizer: user.name,
+      available: newCaravan.seats 
+    });
+    setShowForm(false);
+    setNewCaravan({ title: '', origin: '', date: '', time: '', price: '', seats: '', contact: '', vehicle: '' });
+  };
+
+  const handleRequestOrganizer = (e) => {
+    e.preventDefault();
+    actions.requestOrganizer(organizerRequest);
+    setShowOrganizerForm(false);
+    alert("Sua solicitação foi enviada para análise da administração.");
+  };
+
+  const contactOrganizer = (caravan) => {
+    alert(`Entrando em contato com ${caravan.organizer} via WhatsApp: ${caravan.contact}\n\n"Olá, tenho interesse na caravana ${caravan.title}"`);
+  };
+
+  // Se o usuário quer criar uma caravana
+  if (showForm) {
+    return (
+      <div className="p-4 pb-24 animate-fade-in">
+        <button onClick={() => setShowForm(false)} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
+        <h2 className="text-xl font-bold text-gray-800 mb-6">Criar Nova Caravana</h2>
+        <form onSubmit={handleCreateCaravan} className="space-y-4">
+          <Input label="Título da Caravana" placeholder="Ex: Van do Cláudio - Arapiraca" value={newCaravan.title} onChange={e => setNewCaravan({...newCaravan, title: e.target.value})} required />
+          <Input label="Origem (Cidade/Bairro)" placeholder="Ex: Arapiraca - Posto Shell" value={newCaravan.origin} onChange={e => setNewCaravan({...newCaravan, origin: e.target.value})} required />
+          <div className="grid grid-cols-2 gap-3">
+             <Input label="Data" type="text" placeholder="DD/MM" value={newCaravan.date} onChange={e => setNewCaravan({...newCaravan, date: e.target.value})} required />
+             <Input label="Horário Saída" type="time" value={newCaravan.time} onChange={e => setNewCaravan({...newCaravan, time: e.target.value})} required />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+             <Input label="Preço (R$)" placeholder="0,00" value={newCaravan.price} onChange={e => setNewCaravan({...newCaravan, price: e.target.value})} required />
+             <Input label="Vagas Totais" type="number" placeholder="15" value={newCaravan.seats} onChange={e => setNewCaravan({...newCaravan, seats: e.target.value})} required />
+          </div>
+          <Input label="Veículo" placeholder="Ex: Van Ducato 2020" value={newCaravan.vehicle} onChange={e => setNewCaravan({...newCaravan, vehicle: e.target.value})} required />
+          <Input label="WhatsApp para Contato" placeholder="(82) 99999-9999" value={newCaravan.contact} onChange={e => setNewCaravan({...newCaravan, contact: e.target.value})} required />
+          
+          <Button type="submit" icon={Save}>Publicar Caravana</Button>
+        </form>
+      </div>
+    );
+  }
+
+  // Se o usuário quer ser organizador
+  if (showOrganizerForm) {
+    return (
+      <div className="p-4 pb-24 animate-fade-in">
+        <button onClick={() => setShowOrganizerForm(false)} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
+        <div className="bg-indigo-50 p-6 rounded-2xl mb-6">
+          <Bus size={48} className="text-indigo-600 mb-3" />
+          <h2 className="text-xl font-bold text-indigo-900 mb-2">Seja um Organizador</h2>
+          <p className="text-indigo-700 text-sm">Cadastre-se para criar caravanas e levar pessoas ao evento. A taxa de segurança será implementada futuramente.</p>
+        </div>
+        
+        <form onSubmit={handleRequestOrganizer} className="space-y-4">
+          <Input label="Nome Completo" value={organizerRequest.name} onChange={e => setOrganizerRequest({...organizerRequest, name: e.target.value})} required />
+          <Input label="CPF" placeholder="000.000.000-00" value={organizerRequest.cpf} onChange={e => setOrganizerRequest({...organizerRequest, cpf: e.target.value})} required />
+          <Input label="Celular / WhatsApp" placeholder="(00) 00000-0000" value={organizerRequest.phone} onChange={e => setOrganizerRequest({...organizerRequest, phone: e.target.value})} required />
+          <Input label="Modelo do Veículo Principal" placeholder="Ex: Ônibus Executivo Scania" value={organizerRequest.vehicle} onChange={e => setOrganizerRequest({...organizerRequest, vehicle: e.target.value})} required />
+          
+          <div className="flex items-start gap-2 mt-4 mb-4">
+             <input type="checkbox" required className="mt-1" />
+             <span className="text-xs text-gray-500">Declaro que possuo habilitação adequada e meu veículo está em condições regulares de transporte. Concordo com os termos de uso.</span>
+          </div>
+
+          <Button type="submit" variant="primary">Enviar Solicitação</Button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-24 animate-fade-in">
+      {/* Header */}
+      <div className="sticky top-0 bg-white z-10 px-4 py-4 border-b border-gray-100 shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-bold text-gray-800">Caravanas</h2>
+          
+          {user.organizerStatus === 'approved' ? (
+            <button onClick={() => setShowForm(true)} className="text-xs bg-rose-600 text-white px-3 py-1.5 rounded-lg font-bold flex items-center shadow-md shadow-rose-200">
+               <Plus size={14} className="mr-1"/> Criar
+            </button>
+          ) : user.organizerStatus === 'pending' ? (
+            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg font-bold">Análise Pendente</span>
+          ) : (
+            <button onClick={() => setShowOrganizerForm(true)} className="text-xs border border-rose-600 text-rose-600 px-3 py-1.5 rounded-lg font-bold">
+               Ser Organizador
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-gray-500">Encontre transporte compartilhado para o evento.</p>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {caravans.map(caravan => (
+          <Card key={caravan.id} className="border-l-4 border-l-indigo-500">
+             <div className="flex justify-between items-start mb-2">
+               <h3 className="font-bold text-gray-800 text-lg">{caravan.title}</h3>
+               <span className="bg-green-100 text-green-700 font-bold px-2 py-1 rounded text-xs">R$ {caravan.price}</span>
+             </div>
+             
+             <div className="grid grid-cols-2 gap-2 mb-3">
+               <div className="flex items-center text-sm text-gray-600">
+                  <MapPin size={14} className="mr-2 text-indigo-500" /> 
+                  <span className="truncate">{caravan.origin}</span>
+               </div>
+               <div className="flex items-center text-sm text-gray-600">
+                  <Clock size={14} className="mr-2 text-indigo-500" /> 
+                  {caravan.date} às {caravan.time}
+               </div>
+               <div className="flex items-center text-sm text-gray-600 col-span-2">
+                  <Bus size={14} className="mr-2 text-indigo-500" /> 
+                  {caravan.vehicle}
+               </div>
+             </div>
+
+             <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+               <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase">Organizador</span>
+                  <span className="text-xs font-medium text-gray-700">{caravan.organizer}</span>
+                  <span className="text-[10px] text-gray-400">{caravan.available} vagas restantes</span>
+               </div>
+               <button onClick={() => contactOrganizer(caravan)} className="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center transition-colors">
+                  <MessageCircle size={14} className="mr-1" /> Reservar Vaga
+               </button>
+             </div>
+          </Card>
+        ))}
+        
+        {caravans.length === 0 && (
+          <div className="text-center py-10">
+             <Bus size={48} className="mx-auto text-gray-300 mb-2"/>
+             <p className="text-gray-400">Nenhuma caravana disponível no momento.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// 9. DASHBOARD ADMIN ATUALIZADO
+const AdminScreen = ({ data, actions, organizerRequests }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [activeTool, setActiveTool] = useState('menu'); 
 
   // Form States & Editing
-  const [exhibitorForm, setExhibitorForm] = useState({ id: null, name: '', category: 'cabelo', booth: '', description: '' });
-  const [offerForm, setOfferForm] = useState({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '' });
+  const [exhibitorForm, setExhibitorForm] = useState({ id: null, name: '', category: 'cabelo', booth: '', description: '', image: '' });
+  const [offerForm, setOfferForm] = useState({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '', image: '' });
   const [scheduleForm, setScheduleForm] = useState({ id: null, title: '', time: '', speaker: '', location: '', category: 'cabelo' });
 
   // Reset helpers
-  const resetExhibitorForm = () => setExhibitorForm({ id: null, name: '', category: 'cabelo', booth: '', description: '' });
-  const resetOfferForm = () => setOfferForm({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '' });
+  const resetExhibitorForm = () => setExhibitorForm({ id: null, name: '', category: 'cabelo', booth: '', description: '', image: '' });
+  const resetOfferForm = () => setOfferForm({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '', image: '' });
   const resetScheduleForm = () => setScheduleForm({ id: null, title: '', time: '', speaker: '', location: '', category: 'cabelo' });
 
   const handleLogin = (e) => {
@@ -520,81 +790,43 @@ const AdminScreen = ({ data, actions }) => {
   };
 
   /** HANDLERS PARA EXPOSITORES */
-  const handleEditExhibitor = (ex) => {
-    setExhibitorForm(ex);
-    window.scrollTo(0,0);
-  };
-  
-  const handleDeleteExhibitor = (id) => {
-    if(confirm('Excluir este expositor?')) actions.deleteExhibitor(id);
-  };
-
+  const handleEditExhibitor = (ex) => { setExhibitorForm(ex); window.scrollTo(0,0); };
+  const handleDeleteExhibitor = (id) => { if(confirm('Excluir este expositor?')) actions.deleteExhibitor(id); };
   const handleSubmitExhibitor = (e) => {
     e.preventDefault();
+    const finalImage = exhibitorForm.image || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=200';
     if (exhibitorForm.id) {
-      // Update
-      actions.updateExhibitor({ 
-        ...exhibitorForm, 
-        image: exhibitorForm.image || 'https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=200' 
-      });
+      actions.updateExhibitor({ ...exhibitorForm, image: finalImage });
     } else {
-      // Create
-      actions.addExhibitor({ 
-        ...exhibitorForm, 
-        id: Date.now(), 
-        image: 'https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=200' 
-      });
+      actions.addExhibitor({ ...exhibitorForm, id: Date.now(), image: finalImage });
     }
     resetExhibitorForm();
   };
 
   /** HANDLERS PARA OFERTAS */
-  const handleEditOffer = (offer) => {
-    setOfferForm(offer);
-    window.scrollTo(0,0);
-  };
-
-  const handleDeleteOffer = (id) => {
-    if(confirm('Excluir esta oferta?')) actions.deleteOffer(id);
-  };
-
+  const handleEditOffer = (offer) => { setOfferForm(offer); window.scrollTo(0,0); };
+  const handleDeleteOffer = (id) => { if(confirm('Excluir esta oferta?')) actions.deleteOffer(id); };
   const handleSubmitOffer = (e) => {
     e.preventDefault();
     const exhibitor = data.exhibitors.find(e => e.id.toString() === offerForm.exhibitorId);
-    const offerData = {
-      ...offerForm,
-      exhibitorName: exhibitor ? exhibitor.name : 'Expositor'
-    };
-
-    if (offerForm.id) {
-      actions.updateOffer(offerData);
-    } else {
-      actions.addOffer({ ...offerData, id: Date.now() });
-    }
+    const offerData = { ...offerForm, exhibitorName: exhibitor ? exhibitor.name : 'Expositor' };
+    if (offerForm.id) actions.updateOffer(offerData); else actions.addOffer({ ...offerData, id: Date.now() });
     resetOfferForm();
   };
 
   /** HANDLERS PARA AGENDA */
-  const handleEditSchedule = (item) => {
-    setScheduleForm(item);
-    window.scrollTo(0,0);
-  };
-
-  const handleDeleteSchedule = (id) => {
-    if(confirm('Tem certeza que deseja excluir este evento?')) {
-        actions.deleteSchedule(id);
-    }
-  };
-
+  const handleEditSchedule = (item) => { setScheduleForm(item); window.scrollTo(0,0); };
+  const handleDeleteSchedule = (id) => { if(confirm('Tem certeza que deseja excluir este evento?')) actions.deleteSchedule(id); };
   const handleSubmitSchedule = (e) => {
     e.preventDefault();
-    if (scheduleForm.id) {
-      actions.updateSchedule(scheduleForm);
-    } else {
-      actions.addSchedule({ ...scheduleForm, id: Date.now() });
-    }
+    if (scheduleForm.id) actions.updateSchedule(scheduleForm); else actions.addSchedule({ ...scheduleForm, id: Date.now() });
     resetScheduleForm();
   };
+
+  /** HANDLERS PARA CARAVANAS */
+  const handleDeleteCaravan = (id) => { if(confirm('Excluir esta caravana?')) actions.deleteCaravan(id); };
+  const handleApproveOrganizer = (id) => { actions.approveOrganizer(id); alert("Organizador Aprovado!"); };
+  const handleRejectOrganizer = (id) => { if(confirm('Rejeitar solicitação?')) actions.rejectOrganizer(id); };
 
 
   if (!isAuthenticated) {
@@ -607,13 +839,7 @@ const AdminScreen = ({ data, actions }) => {
         <p className="text-gray-500 text-center mb-8">Apenas para organizadores do evento.</p>
         
         <form onSubmit={handleLogin} className="w-full max-w-sm">
-          <Input 
-            label="Senha de Acesso" 
-            type="password" 
-            placeholder="Digite 9999"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <Input label="Senha de Acesso" type="password" placeholder="Digite 9999" value={password} onChange={(e) => setPassword(e.target.value)} />
           {error && <p className="text-red-500 text-xs mb-4 text-center">{error}</p>}
           <Button type="submit">Entrar no Painel</Button>
         </form>
@@ -626,10 +852,15 @@ const AdminScreen = ({ data, actions }) => {
     return (
       <div className="p-4 pb-24 animate-fade-in">
         <button onClick={() => { setActiveTool('menu'); resetExhibitorForm(); }} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
-        
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
           <h2 className="text-lg font-bold text-gray-800 mb-4">{exhibitorForm.id ? 'Editar Expositor' : 'Novo Expositor'}</h2>
           <form onSubmit={handleSubmitExhibitor}>
+            <ImageInput 
+              label="Logo da Marca" 
+              value={exhibitorForm.image} 
+              onChange={val => setExhibitorForm({...exhibitorForm, image: val})} 
+              recommendedSize="500x500px (Quadrado)"
+            />
             <Input label="Nome da Marca" value={exhibitorForm.name} onChange={e => setExhibitorForm({...exhibitorForm, name: e.target.value})} required />
             <Input label="Número do Stand" value={exhibitorForm.booth} onChange={e => setExhibitorForm({...exhibitorForm, booth: e.target.value})} placeholder="Ex: A-22" required />
             <Select label="Categoria" value={exhibitorForm.category} onChange={e => setExhibitorForm({...exhibitorForm, category: e.target.value})}>
@@ -642,7 +873,6 @@ const AdminScreen = ({ data, actions }) => {
             </div>
           </form>
         </div>
-
         <h3 className="font-bold text-gray-700 mb-3">Expositores Cadastrados</h3>
         <div className="space-y-3">
           {data.exhibitors.map(ex => (
@@ -651,7 +881,7 @@ const AdminScreen = ({ data, actions }) => {
                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0"><img src={ex.image} className="w-full h-full object-cover rounded-lg"/></div>
                    <div className="min-w-0">
                       <p className="font-bold text-gray-800 text-sm truncate">{ex.name}</p>
-                      <p className="text-xs text-gray-500">{ex.booth} • {CATEGORIES.find(c=>c.id===ex.category)?.label}</p>
+                      <p className="text-xs text-gray-500">{ex.booth}</p>
                    </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
@@ -670,10 +900,15 @@ const AdminScreen = ({ data, actions }) => {
     return (
       <div className="p-4 pb-24 animate-fade-in">
         <button onClick={() => { setActiveTool('menu'); resetOfferForm(); }} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
-        
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
           <h2 className="text-lg font-bold text-gray-800 mb-4">{offerForm.id ? 'Editar Oferta' : 'Nova Oferta'}</h2>
           <form onSubmit={handleSubmitOffer}>
+             <ImageInput 
+              label="Imagem da Oferta (Opcional)" 
+              value={offerForm.image} 
+              onChange={val => setOfferForm({...offerForm, image: val})} 
+              recommendedSize="800x400px (2:1)"
+            />
              <Input label="Título da Oferta" value={offerForm.title} onChange={e => setOfferForm({...offerForm, title: e.target.value})} placeholder="Ex: 50% OFF" required />
              <Select label="Expositor" value={offerForm.exhibitorId} onChange={e => setOfferForm({...offerForm, exhibitorId: e.target.value})} required>
                <option value="">Selecione...</option>
@@ -690,14 +925,16 @@ const AdminScreen = ({ data, actions }) => {
              </div>
           </form>
         </div>
-
         <h3 className="font-bold text-gray-700 mb-3">Ofertas Ativas</h3>
         <div className="space-y-3">
           {data.offers.map(offer => (
              <div key={offer.id} className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
-                <div className="min-w-0">
-                   <p className="font-bold text-gray-800 text-sm truncate">{offer.title}</p>
-                   <p className="text-xs text-gray-500">{offer.exhibitorName} • {offer.code}</p>
+                <div className="flex items-center gap-3 overflow-hidden">
+                   {offer.image && <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0"><img src={offer.image} className="w-full h-full object-cover rounded-lg"/></div>}
+                   <div className="min-w-0">
+                      <p className="font-bold text-gray-800 text-sm truncate">{offer.title}</p>
+                      <p className="text-xs text-gray-500">{offer.exhibitorName} • {offer.code}</p>
+                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                    <button onClick={() => handleEditOffer(offer)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit2 size={16}/></button>
@@ -705,7 +942,6 @@ const AdminScreen = ({ data, actions }) => {
                 </div>
              </div>
           ))}
-          {data.offers.length === 0 && <p className="text-gray-400 text-sm text-center py-4">Nenhuma oferta cadastrada.</p>}
         </div>
       </div>
     );
@@ -716,7 +952,6 @@ const AdminScreen = ({ data, actions }) => {
     return (
       <div className="p-4 pb-24 animate-fade-in">
         <button onClick={() => { setActiveTool('menu'); resetScheduleForm(); }} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
-        
         <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
             <h2 className="text-lg font-bold text-gray-800 mb-4">{scheduleForm.id ? 'Editar Evento' : 'Novo Evento'}</h2>
             <form onSubmit={handleSubmitSchedule}>
@@ -732,7 +967,6 @@ const AdminScreen = ({ data, actions }) => {
                 </div>
             </form>
         </div>
-
         <h3 className="font-bold text-gray-700 mb-2">Agenda Atual</h3>
         <div className="space-y-2">
             {data.schedule.sort((a,b) => a.time.localeCompare(b.time)).map(item => (
@@ -752,6 +986,54 @@ const AdminScreen = ({ data, actions }) => {
     );
   }
 
+  // --- GERENCIAR CARAVANAS ---
+  if (activeTool === 'manageCaravans') {
+    return (
+      <div className="p-4 pb-24 animate-fade-in">
+        <button onClick={() => setActiveTool('menu')} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
+
+        {/* Aprovações Pendentes */}
+        {organizerRequests.filter(req => req.status === 'pending').length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-bold text-gray-800 mb-3 flex items-center"><AlertCircle size={18} className="text-yellow-500 mr-2" /> Aprovações Pendentes</h3>
+            <div className="space-y-3">
+              {organizerRequests.filter(req => req.status === 'pending').map(req => (
+                <div key={req.id} className="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-gray-800">{req.name}</p>
+                      <p className="text-xs text-gray-600">CPF: {req.cpf}</p>
+                      <p className="text-xs text-gray-600">Veículo: {req.vehicle}</p>
+                      <p className="text-xs text-gray-600">Contato: {req.phone}</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button onClick={() => handleApproveOrganizer(req.id)} className="bg-green-500 text-white p-2 rounded-lg"><Check size={16}/></button>
+                      <button onClick={() => handleRejectOrganizer(req.id)} className="bg-red-400 text-white p-2 rounded-lg"><X size={16}/></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <h3 className="font-bold text-gray-800 mb-3">Caravanas Ativas</h3>
+        <div className="space-y-3">
+          {data.caravans.map(caravan => (
+            <div key={caravan.id} className="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
+                <div className="min-w-0">
+                    <p className="font-bold text-gray-800 text-sm truncate">{caravan.title}</p>
+                    <p className="text-xs text-gray-500">Org: {caravan.organizer} • {caravan.seats} vagas</p>
+                </div>
+                <button onClick={() => handleDeleteCaravan(caravan.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+            </div>
+          ))}
+          {data.caravans.length === 0 && <p className="text-gray-400 text-sm">Nenhuma caravana criada.</p>}
+        </div>
+      </div>
+    );
+  }
+
   // Dashboard Principal
   return (
     <div className="p-6 pb-24 animate-fade-in">
@@ -762,20 +1044,21 @@ const AdminScreen = ({ data, actions }) => {
       
       <div className="grid grid-cols-2 gap-4 mb-8">
         <Card className="bg-indigo-600 text-white border-none flex flex-col justify-between h-24">
-          <p className="text-indigo-200 text-xs font-medium">Expositores</p>
-          <h3 className="text-3xl font-bold">{data.exhibitors.length}</h3>
+          <p className="text-indigo-200 text-xs font-medium">Caravanas</p>
+          <h3 className="text-3xl font-bold">{data.caravans.length}</h3>
         </Card>
         <Card className="bg-rose-500 text-white border-none flex flex-col justify-between h-24">
-          <p className="text-rose-200 text-xs font-medium">Ofertas Ativas</p>
-          <h3 className="text-3xl font-bold">{data.offers.length}</h3>
+          <p className="text-rose-200 text-xs font-medium">Expositores</p>
+          <h3 className="text-3xl font-bold">{data.exhibitors.length}</h3>
         </Card>
       </div>
 
       <h3 className="font-bold text-gray-700 mb-4">Gerenciar Evento</h3>
       <div className="space-y-3">
-        <Button variant="secondary" icon={User} onClick={() => setActiveTool('manageExhibitors')}>Gerenciar Expositores</Button>
-        <Button variant="secondary" icon={Ticket} onClick={() => setActiveTool('manageOffers')}>Gerenciar Ofertas</Button>
-        <Button variant="secondary" icon={Calendar} onClick={() => setActiveTool('manageSchedule')}>Gerenciar Agenda</Button>
+        <Button variant="secondary" icon={User} onClick={() => setActiveTool('manageExhibitors')}>Expositores</Button>
+        <Button variant="secondary" icon={Bus} onClick={() => setActiveTool('manageCaravans')}>Caravanas & Organizadores</Button>
+        <Button variant="secondary" icon={Ticket} onClick={() => setActiveTool('manageOffers')}>Ofertas</Button>
+        <Button variant="secondary" icon={Calendar} onClick={() => setActiveTool('manageSchedule')}>Agenda</Button>
       </div>
     </div>
   );
@@ -786,10 +1069,13 @@ const AdminScreen = ({ data, actions }) => {
  */
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
+  // Adicionei organizerStatus: 'none' | 'pending' | 'approved'
   const [user, setUser] = useState({
+    id: 999,
     name: 'Visitante',
     email: 'visitante@email.com',
     role: 'visitor',
+    organizerStatus: 'none', 
     interests: ['cabelo', 'maquiagem']
   });
 
@@ -797,6 +1083,8 @@ export default function App() {
   const [exhibitors, setExhibitors] = useState(INITIAL_EXHIBITORS);
   const [schedule, setSchedule] = useState(INITIAL_SCHEDULE);
   const [offers, setOffers] = useState(INITIAL_OFFERS);
+  const [caravans, setCaravans] = useState(INITIAL_CARAVANS);
+  const [organizerRequests, setOrganizerRequests] = useState(MOCK_ORGANIZER_REQUESTS);
 
   // Scroll to top on screen change
   useEffect(() => {
@@ -817,7 +1105,40 @@ export default function App() {
     // Agenda
     addSchedule: (sc) => setSchedule([...schedule, sc]),
     updateSchedule: (updated) => setSchedule(schedule.map(sc => sc.id === updated.id ? updated : sc)),
-    deleteSchedule: (id) => setSchedule(schedule.filter(s => s.id !== id))
+    deleteSchedule: (id) => setSchedule(schedule.filter(s => s.id !== id)),
+
+    // Caravanas (Usuário Final)
+    addCaravan: (cv) => setCaravans([...caravans, cv]),
+    
+    // Admin Caravanas
+    deleteCaravan: (id) => setCaravans(caravans.filter(c => c.id !== id)),
+    
+    // Solicitação de Organizador
+    requestOrganizer: (data) => {
+      // Adiciona na lista do Admin
+      setOrganizerRequests([...organizerRequests, { ...data, id: Date.now(), userId: user.id, status: 'pending' }]);
+      // Atualiza estado local do usuário
+      setUser({ ...user, organizerStatus: 'pending' });
+    },
+    
+    // Aprovação Admin
+    approveOrganizer: (requestId) => {
+      const req = organizerRequests.find(r => r.id === requestId);
+      setOrganizerRequests(organizerRequests.map(r => r.id === requestId ? { ...r, status: 'approved' } : r));
+      
+      // Se for o usuário atual
+      if (req && req.userId === user.id) {
+        setUser(prev => ({ ...prev, organizerStatus: 'approved' }));
+      }
+    },
+    
+    rejectOrganizer: (requestId) => {
+       const req = organizerRequests.find(r => r.id === requestId);
+       setOrganizerRequests(organizerRequests.filter(r => r.id !== requestId));
+       if (req && req.userId === user.id) {
+        setUser(prev => ({ ...prev, organizerStatus: 'none' }));
+      }
+    }
   };
 
   const renderScreen = () => {
@@ -827,8 +1148,10 @@ export default function App() {
       case 'schedule': return <ScheduleScreen schedule={schedule} />;
       case 'map': return <MapScreen exhibitors={exhibitors} />;
       case 'offers': return <OffersScreen offers={offers} />;
-      case 'profile': return <ProfileScreen user={user} setUser={setUser} />;
-      case 'admin': return <AdminScreen data={{exhibitors, schedule, offers}} actions={adminActions} />;
+      case 'caravans': return <CaravansScreen caravans={caravans} user={user} actions={adminActions} />;
+      case 'profile': return <ProfileScreen user={user} setUser={setUser} onChangeScreen={setCurrentScreen} />;
+      case 'settings': return <SettingsScreen user={user} setUser={setUser} onBack={() => setCurrentScreen('profile')} />;
+      case 'admin': return <AdminScreen data={{exhibitors, schedule, offers, caravans}} organizerRequests={organizerRequests} actions={adminActions} />;
       default: return <HomeScreen onChangeScreen={setCurrentScreen} exhibitors={exhibitors} />;
     }
   };
@@ -863,6 +1186,7 @@ export default function App() {
         {[
           { id: 'home', icon: Home, label: 'Início' },
           { id: 'schedule', icon: Calendar, label: 'Agenda' },
+          { id: 'caravans', icon: Bus, label: 'Caravana' },
           { id: 'offers', icon: Ticket, label: 'Ofertas' },
           { id: 'profile', icon: User, label: 'Perfil' },
         ].map(item => {
@@ -871,11 +1195,11 @@ export default function App() {
             <button
               key={item.id}
               onClick={() => setCurrentScreen(item.id)}
-              className={`flex flex-col items-center justify-center w-16 transition-all duration-300 ${isActive ? 'text-rose-600 -translate-y-1' : 'text-gray-400'}`}
+              className={`flex flex-col items-center justify-center w-14 transition-all duration-300 ${isActive ? 'text-rose-600 -translate-y-1' : 'text-gray-400'}`}
             >
               {isActive && <div className="w-1 h-1 bg-rose-600 rounded-full mb-1"></div>}
-              <item.icon size={isActive ? 24 : 22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'drop-shadow-sm' : ''} />
-              <span className="text-[10px] font-medium mt-1">{item.label}</span>
+              <item.icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'drop-shadow-sm' : ''} />
+              <span className="text-[9px] font-medium mt-1">{item.label}</span>
             </button>
           )
         })}
