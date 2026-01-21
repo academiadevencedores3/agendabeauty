@@ -5,7 +5,7 @@ import {
   Filter, Award, LogOut, Ticket, Settings,
   Plus, Trash2, Save, X, Lock, CheckCircle, Edit2,
   Bus, Phone, MessageCircle, AlertCircle, Check, Image as ImageIcon, Upload,
-  Bell, Shield, ChevronLeft
+  Bell, Shield, ChevronLeft, Eye, EyeOff, Layout
 } from 'lucide-react';
 
 /**
@@ -53,6 +53,16 @@ const MOCK_ORGANIZER_REQUESTS = [
   { id: 101, name: 'Carlos Motorista', phone: '82999991111', vehicle: 'Van Ducato 20 lugares', cpf: '000.111.222-33', status: 'pending' },
   { id: 102, name: 'Ana Viagens', phone: '82988882222', vehicle: 'Ônibus 50 lugares', cpf: '111.222.333-44', status: 'pending' }
 ];
+
+const INITIAL_BANNER = {
+  image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800',
+  dateText: '20 a 23 de Outubro',
+  dateVisible: true,
+  titleText: 'Maceió Beauty & Hair',
+  titleVisible: true,
+  subtitleText: 'O maior evento de beleza do Nordeste.',
+  subtitleVisible: true
+};
 
 /**
  * COMPONENTES UTILITÁRIOS
@@ -150,19 +160,33 @@ const ImageInput = ({ label, value, onChange, recommendedSize }) => {
           )}
         </div>
         <p className="text-[10px] text-gray-400 ml-1 flex items-center gap-1">
-          <AlertCircle size={10} /> Tamanho padrão: <span className="font-medium text-gray-600">{recommendedSize}</span>
+          <AlertCircle size={10} /> Tamanho recomendado: <span className="font-medium text-gray-600">{recommendedSize}</span>
         </p>
       </div>
     </div>
   );
 };
 
+// Componente Toggle com Label para Visibilidade
+const VisibilityToggle = ({ label, isVisible, onToggle }) => (
+  <div className="flex items-center justify-between mb-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+    <span className="text-xs font-medium text-gray-600">{label}</span>
+    <button 
+      onClick={onToggle}
+      type="button"
+      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-colors ${isVisible ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}
+    >
+      {isVisible ? <><Eye size={12}/> Visível</> : <><EyeOff size={12}/> Oculto</>}
+    </button>
+  </div>
+);
+
 /**
  * TELAS DO APLICATIVO
  */
 
 // 1. TELA INICIAL (HOME)
-const HomeScreen = ({ onChangeScreen, userInterests, exhibitors }) => {
+const HomeScreen = ({ onChangeScreen, userInterests, exhibitors, bannerSettings }) => {
   const recommendedExhibitors = useMemo(() => {
     if (!userInterests || userInterests.length === 0) return exhibitors.slice(0, 3);
     return exhibitors.filter(ex => userInterests.includes(ex.category)).slice(0, 3);
@@ -170,17 +194,23 @@ const HomeScreen = ({ onChangeScreen, userInterests, exhibitors }) => {
 
   return (
     <div className="space-y-6 pb-24 animate-fade-in">
-      {/* Header / Banner */}
+      {/* Header / Banner Dinâmico */}
       <div className="relative h-48 bg-gray-900 rounded-b-3xl overflow-hidden -mx-4 -mt-4 shadow-xl">
         <img 
-          src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800" 
+          src={bannerSettings.image} 
           className="w-full h-full object-cover opacity-60"
           alt="Banner Evento"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 to-transparent flex flex-col justify-end p-6">
-          <span className="text-rose-400 font-bold tracking-wider text-xs uppercase mb-1">20 a 23 de Outubro</span>
-          <h1 className="text-white text-2xl font-bold">Maceió Beauty & Hair</h1>
-          <p className="text-gray-300 text-sm">O maior evento de beleza do Nordeste.</p>
+          {bannerSettings.dateVisible && (
+            <span className="text-rose-400 font-bold tracking-wider text-xs uppercase mb-1">{bannerSettings.dateText}</span>
+          )}
+          {bannerSettings.titleVisible && (
+            <h1 className="text-white text-2xl font-bold">{bannerSettings.titleText}</h1>
+          )}
+          {bannerSettings.subtitleVisible && (
+            <p className="text-gray-300 text-sm">{bannerSettings.subtitleText}</p>
+          )}
         </div>
       </div>
 
@@ -557,7 +587,7 @@ const ProfileScreen = ({ user, setUser, onChangeScreen }) => {
   );
 };
 
-// 7. NOVA TELA: CONFIGURAÇÕES
+// 7. TELA: CONFIGURAÇÕES
 const SettingsScreen = ({ user, setUser, onBack }) => {
   const [formData, setFormData] = useState({ name: user.name, email: user.email, notifications: true });
 
@@ -763,7 +793,7 @@ const CaravansScreen = ({ caravans, user, actions }) => {
 };
 
 // 9. DASHBOARD ADMIN ATUALIZADO
-const AdminScreen = ({ data, actions, organizerRequests }) => {
+const AdminScreen = ({ data, actions, organizerRequests, homeBanner }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -773,11 +803,17 @@ const AdminScreen = ({ data, actions, organizerRequests }) => {
   const [exhibitorForm, setExhibitorForm] = useState({ id: null, name: '', category: 'cabelo', booth: '', description: '', image: '' });
   const [offerForm, setOfferForm] = useState({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '', image: '' });
   const [scheduleForm, setScheduleForm] = useState({ id: null, title: '', time: '', speaker: '', location: '', category: 'cabelo' });
+  const [bannerForm, setBannerForm] = useState(homeBanner);
 
   // Reset helpers
   const resetExhibitorForm = () => setExhibitorForm({ id: null, name: '', category: 'cabelo', booth: '', description: '', image: '' });
   const resetOfferForm = () => setOfferForm({ id: null, title: '', exhibitorId: '', discount: '', code: '', expires: '', image: '' });
   const resetScheduleForm = () => setScheduleForm({ id: null, title: '', time: '', speaker: '', location: '', category: 'cabelo' });
+
+  // Update banner form when prop changes
+  useEffect(() => {
+    setBannerForm(homeBanner);
+  }, [homeBanner]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -821,6 +857,14 @@ const AdminScreen = ({ data, actions, organizerRequests }) => {
     e.preventDefault();
     if (scheduleForm.id) actions.updateSchedule(scheduleForm); else actions.addSchedule({ ...scheduleForm, id: Date.now() });
     resetScheduleForm();
+  };
+
+  /** HANDLERS PARA BANNER */
+  const handleSubmitBanner = (e) => {
+    e.preventDefault();
+    actions.updateHomeBanner(bannerForm);
+    alert('Banner atualizado com sucesso!');
+    setActiveTool('menu');
   };
 
   /** HANDLERS PARA CARAVANAS */
@@ -1034,6 +1078,75 @@ const AdminScreen = ({ data, actions, organizerRequests }) => {
     );
   }
 
+  // --- CONFIGURAR BANNER HOME ---
+  if (activeTool === 'manageBanner') {
+    return (
+      <div className="p-4 pb-24 animate-fade-in">
+        <button onClick={() => setActiveTool('menu')} className="mb-4 text-sm text-gray-500 flex items-center"><ChevronRight className="rotate-180 mr-1" size={16}/> Voltar</button>
+        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Configurar Banner da Home</h2>
+          <form onSubmit={handleSubmitBanner}>
+            
+            <div className="mb-6">
+              <ImageInput 
+                label="Imagem de Fundo" 
+                value={bannerForm.image} 
+                onChange={val => setBannerForm({...bannerForm, image: val})} 
+                recommendedSize="800x400px (Horizontal)"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-3 border border-gray-100 rounded-xl bg-white">
+                <VisibilityToggle 
+                  label="Data do Evento" 
+                  isVisible={bannerForm.dateVisible} 
+                  onToggle={() => setBannerForm({...bannerForm, dateVisible: !bannerForm.dateVisible})}
+                />
+                <Input 
+                  label="Texto da Data" 
+                  value={bannerForm.dateText} 
+                  onChange={e => setBannerForm({...bannerForm, dateText: e.target.value})} 
+                />
+              </div>
+
+              <div className="p-3 border border-gray-100 rounded-xl bg-white">
+                <VisibilityToggle 
+                  label="Título Principal" 
+                  isVisible={bannerForm.titleVisible} 
+                  onToggle={() => setBannerForm({...bannerForm, titleVisible: !bannerForm.titleVisible})}
+                />
+                <Input 
+                  label="Texto do Título" 
+                  value={bannerForm.titleText} 
+                  onChange={e => setBannerForm({...bannerForm, titleText: e.target.value})} 
+                />
+              </div>
+
+              <div className="p-3 border border-gray-100 rounded-xl bg-white">
+                <VisibilityToggle 
+                  label="Subtítulo" 
+                  isVisible={bannerForm.subtitleVisible} 
+                  onToggle={() => setBannerForm({...bannerForm, subtitleVisible: !bannerForm.subtitleVisible})}
+                />
+                <Input 
+                  label="Texto do Subtítulo" 
+                  value={bannerForm.subtitleText} 
+                  onChange={e => setBannerForm({...bannerForm, subtitleText: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="mt-6">
+               <Button type="submit" icon={Save}>Salvar Alterações</Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   // Dashboard Principal
   return (
     <div className="p-6 pb-24 animate-fade-in">
@@ -1055,6 +1168,7 @@ const AdminScreen = ({ data, actions, organizerRequests }) => {
 
       <h3 className="font-bold text-gray-700 mb-4">Gerenciar Evento</h3>
       <div className="space-y-3">
+        <Button variant="secondary" icon={Layout} onClick={() => setActiveTool('manageBanner')}>Banner da Home</Button>
         <Button variant="secondary" icon={User} onClick={() => setActiveTool('manageExhibitors')}>Expositores</Button>
         <Button variant="secondary" icon={Bus} onClick={() => setActiveTool('manageCaravans')}>Caravanas & Organizadores</Button>
         <Button variant="secondary" icon={Ticket} onClick={() => setActiveTool('manageOffers')}>Ofertas</Button>
@@ -1085,6 +1199,9 @@ export default function App() {
   const [offers, setOffers] = useState(INITIAL_OFFERS);
   const [caravans, setCaravans] = useState(INITIAL_CARAVANS);
   const [organizerRequests, setOrganizerRequests] = useState(MOCK_ORGANIZER_REQUESTS);
+  
+  // Novo Estado para o Banner da Home
+  const [homeBanner, setHomeBanner] = useState(INITIAL_BANNER);
 
   // Scroll to top on screen change
   useEffect(() => {
@@ -1138,12 +1255,15 @@ export default function App() {
        if (req && req.userId === user.id) {
         setUser(prev => ({ ...prev, organizerStatus: 'none' }));
       }
-    }
+    },
+
+    // Ação do Banner
+    updateHomeBanner: (settings) => setHomeBanner(settings)
   };
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'home': return <HomeScreen onChangeScreen={setCurrentScreen} userInterests={user.interests} exhibitors={exhibitors} />;
+      case 'home': return <HomeScreen onChangeScreen={setCurrentScreen} userInterests={user.interests} exhibitors={exhibitors} bannerSettings={homeBanner} />;
       case 'exhibitors': return <ExhibitorsScreen exhibitors={exhibitors} />;
       case 'schedule': return <ScheduleScreen schedule={schedule} />;
       case 'map': return <MapScreen exhibitors={exhibitors} />;
@@ -1151,8 +1271,8 @@ export default function App() {
       case 'caravans': return <CaravansScreen caravans={caravans} user={user} actions={adminActions} />;
       case 'profile': return <ProfileScreen user={user} setUser={setUser} onChangeScreen={setCurrentScreen} />;
       case 'settings': return <SettingsScreen user={user} setUser={setUser} onBack={() => setCurrentScreen('profile')} />;
-      case 'admin': return <AdminScreen data={{exhibitors, schedule, offers, caravans}} organizerRequests={organizerRequests} actions={adminActions} />;
-      default: return <HomeScreen onChangeScreen={setCurrentScreen} exhibitors={exhibitors} />;
+      case 'admin': return <AdminScreen data={{exhibitors, schedule, offers, caravans}} organizerRequests={organizerRequests} homeBanner={homeBanner} actions={adminActions} />;
+      default: return <HomeScreen onChangeScreen={setCurrentScreen} exhibitors={exhibitors} bannerSettings={homeBanner} />;
     }
   };
 
